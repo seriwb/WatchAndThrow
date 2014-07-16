@@ -8,10 +8,13 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * @author seri
+ * 監視系Util
  *
+ * @author seri
  */
 public class ObservationUtil {
 
@@ -22,7 +25,8 @@ public class ObservationUtil {
    * @throws IOException 存在しないフォルダを指定した場合
    * @throws InterruptedException 待機中に割り込みが発生した場合
    */
-  public static void watchNewFile(String path) throws IOException, InterruptedException {
+  public static void watchNewFile(String path, String trashPath)
+      throws IOException, InterruptedException {
 
     // 監視場所を指定
     Path dir = Paths.get(path);
@@ -31,7 +35,10 @@ public class ObservationUtil {
     // 新しいファイルが作成されるのを監視する（ドロップ待ち）
     dir.register(watcher, StandardWatchEventKinds.ENTRY_CREATE);
 
-    while(true) {
+    List<Path> pathList = new ArrayList<>();
+
+    // Path child = null;
+    while (true) {
       // 監視キー：監視可能なオブジェクトが監視サービスに登録されると作成される。
       // ここでは新しいファイルが作成されるとキーができる。
       WatchKey watchKey = watcher.take();
@@ -47,12 +54,20 @@ public class ObservationUtil {
 
         // 変更のあったパスを取得
         Path name = (Path) event.context();
-        Path child = dir.resolve(name);
+        pathList.add(dir.resolve(name));
 
-        System.out.println(child + "が作成されました。");
+        // System.out.println(child + "が作成されました。");
+
       }
+
+      // TODO:リスト分のファイル転送、転送時の日時をファイル名に付与する
+      // TODO:送信ファイルはゴミに移動（メソッド名変更）
+      // TODO:クリアしたリストには現在存在するファイルのPathを設定する
+
+      // ----------後処理--------
       // リセットしないと繰り返されない
       watchKey.reset();
+      // pathList.clear();
     }
   }
 }
